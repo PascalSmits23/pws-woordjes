@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Woordjes trainer – Slimme (AI) versie</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #e0f7fa, #f3e5f5);
+    }
+    h1 {
+      text-align: center;
+      color: #4a148c;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      margin-top: 20px;
+      border-left: 6px solid #7b1fa2;
+    }
+    .field {
+      margin: 10px 0;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background: #7b1fa2;
+      color: white;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #4a148c;
+    }
+    #feedback {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    #stats {
+      margin-top: 15px;
+      font-size: 0.9em;
+      color: #555;
+    }
+    #wordInfo {
+      font-size: 0.9em;
+      color: #777;
+      margin-top: 5px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      color: white;
+      margin-left: 5px;
+    }
+    .badge-easy { background: #43a047; }
+    .badge-medium { background: #fb8c00; }
+    .badge-hard { background: #e53935; }
+  </style>
+</head>
+<body>
+
+<h1>Woordjes leren – Slimme (AI) versie</h1>
+<p>
+  Deze versie probeert zich aan jou aan te passen. Woorden die je fout doet of vaak fout hebt gedaan,
+  worden <strong>vaker herhaald</strong>. Makkelijke woorden komen minder vaak terug.
+</p>
+
+<div class="card">
+  <div class="field">
+    <span><strong>Vertaal dit woord (EN → NL):</strong></span>
+    <div id="questionWord" style="font-size:1.4em; margin-top:5px;"></div>
+    <div id="wordInfo"></div>
+  </div>
+
+  <div class="field">
+    <input type="text" id="answerInput" placeholder="Typ hier je vertaling" style="width:100%; padding:8px;">
+  </div>
+
+  <button onclick="checkAnswer()">Check</button>
+  <button onclick="nextQuestion()">Volgende zonder check</button>
+
+  <div id="feedback"></div>
+  <div id="stats"></div>
+</div>
+
+<script>
+  // Zelfde woordlijst, maar nu met extra velden voor 'AI'
+  const words = [
+    { front: "apple",   back: "appel",   score: 0, asked: 0, correct: 0 },
+    { front: "house",   back: "huis",    score: 0, asked: 0, correct: 0 },
+    { front: "school",  back: "school",  score: 0, asked: 0, correct: 0 },
+    { front: "computer",back: "computer",score: 0, asked: 0, correct: 0 },
+    { front: "window",  back: "raam",    score: 0, asked: 0, correct: 0 },
+    { front: "car",     back: "auto",    score: 0, asked: 0, correct: 0 },
+    { front: "tree",    back: "boom",    score: 0, asked: 0, correct: 0 },
+    { front: "book",    back: "boek",    score: 0, asked: 0, correct: 0 },
+    { front: "water",   back: "water",   score: 0, asked: 0, correct: 0 }
+  ];
+
+  let currentWord = null;
+  let totalAsked = 0;
+  let totalCorrect = 0;
+
+  function difficultyBadge(score) {
+    if (score >= 4) return '<span class="badge badge-easy">makkelijk</span>';
+    if (score >= 2) return '<span class="badge badge-medium">gemiddeld</span>';
+    return '<span class="badge badge-hard">moeilijk</span>';
+  }
+
+  // Slim woorden kiezen:
+  // 1. Zoek de laagste score.
+  // 2. Kies willekeurig één van de woorden met die laagste score.
+  function pickSmartWord() {
+    let minScore = Infinity;
+    words.forEach(w => {
+      if (w.score < minScore) minScore = w.score;
+    });
+
+    const candidates = words.filter(w => w.score === minScore);
+    const index = Math.floor(Math.random() * candidates.length);
+    return candidates[index];
+  }
+
+  function showStats() {
+    const statsDiv = document.getElementById("stats");
+    statsDiv.textContent = `Totaal gevraagd: ${totalAsked} | Goed: ${totalCorrect}`;
+  }
+
+  function updateWordInfo() {
+    const wordInfoDiv = document.getElementById("wordInfo");
+    const w = currentWord;
+    const accuracy = w.asked > 0 ? Math.round((w.correct / w.asked) * 100) : 0;
+    wordInfoDiv.innerHTML =
+      `Dit woord heb je ${w.asked}× gehad, ${w.correct}× goed (${accuracy}% juist). ` +
+      difficultyBadge(w.score);
+  }
+
+  function nextQuestion() {
+    currentWord = pickSmartWord();
+    currentWord.asked++;
+    totalAsked++;
+
+    document.getElementById("questionWord").textContent = currentWord.front;
+    document.getElementById("answerInput").value = "";
+    document.getElementById("answerInput").focus();
+    document.getElementById("feedback").textContent = "";
+
+    updateWordInfo();
+    showStats();
+  }
+
+  function checkAnswer() {
+    const userAnswer = document.getElementById("answerInput").value.trim().toLowerCase();
+    const correct = currentWord.back.toLowerCase();
+    const feedbackDiv = document.getElementById("feedback");
+
+    if (!userAnswer) {
+      feedbackDiv.textContent = "Typ eerst een antwoord.";
+      feedbackDiv.style.color = "orange";
+      return;
+    }
+
+    if (userAnswer === correct) {
+      feedbackDiv.textContent = "Goed! Dit woord wordt nu als makkelijker gezien.";
+      feedbackDiv.style.color = "green";
+      currentWord.score = Math.min(currentWord.score + 1, 5); // max score 5
+      currentWord.correct++;
+      totalCorrect++;
+    } else {
+      feedbackDiv.textContent = `Fout. Goed antwoord: "${correct}". 
+Dit woord wordt als moeilijker gezien en zal vaker terugkomen.`;
+      feedbackDiv.style.color = "red";
+      currentWord.score = Math.max(currentWord.score - 1, 0); // min score 0
+    }
+
+    updateWordInfo();
+    showStats();
+  }
+
+  // Start met eerste vraag
+  nextQuestion();
+</script>
+
+</body>
+</html>
