@@ -2,70 +2,80 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <title>Woordjes trainer – Random</title>
+  <title>Standaard versie</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
+      max-width: 800px;
       margin: 40px auto;
       padding: 20px;
       background: #f4f4f4;
+      font-size: 18px;
     }
     h1 {
       text-align: center;
+      font-size: 2.2em;
     }
     .card {
       background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-top: 20px;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      margin-top: 30px;
     }
     .field {
-      margin: 10px 0;
+      margin: 15px 0;
+    }
+    #questionWord {
+      font-size: 1.8em;
+      margin-top: 8px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1em;
+      box-sizing: border-box;
     }
     button {
-      padding: 8px 16px;
+      padding: 10px 20px;
       border: none;
       border-radius: 4px;
       background: #2196f3;
       color: white;
       cursor: pointer;
-      margin-right: 10px;
+      margin-right: 12px;
+      font-size: 1em;
     }
     button:hover {
       background: #1976d2;
     }
     #feedback {
-      margin-top: 10px;
+      margin-top: 15px;
       font-weight: bold;
+      min-height: 1.4em;
     }
     #stats {
-      margin-top: 15px;
-      font-size: 0.9em;
+      margin-top: 20px;
+      font-size: 0.95em;
       color: #555;
     }
   </style>
 </head>
 <body>
 
-<h1>Woordjes leren – Random versie</h1>
-<p>
-  Deze versie kiest elke keer <strong>willekeurig</strong> een woord.
-  Hij onthoudt niet welke je goed of fout had.
-</p>
+<h1>Standaard versie</h1>
 
 <div class="card">
   <div class="field">
     <span><strong>Vertaal dit woord (EN → NL):</strong></span>
-    <div id="questionWord" style="font-size:1.4em; margin-top:5px;"></div>
+    <div id="questionWord"></div>
   </div>
 
   <div class="field">
-    <input type="text" id="answerInput" placeholder="Typ hier je vertaling" style="width:100%; padding:8px;">
+    <input type="text" id="answerInput" placeholder="Typ hier je vertaling">
   </div>
 
-  <button onclick="checkAnswer()">Check</button>
+  <button id="checkButton" onclick="checkAnswer()">Check</button>
   <button onclick="nextQuestion()">Volgende zonder check</button>
 
   <div id="feedback"></div>
@@ -73,22 +83,23 @@
 </div>
 
 <script>
-  // Lijst met voorbeeldwoorden: engels → nederlands
+  // Woordenlijst: Engels → Nederlands
   const words = [
-    { front: "apple", back: "appel" },
-    { front: "house", back: "huis" },
-    { front: "school", back: "school" },
-    { front: "computer", back: "computer" },
-    { front: "window", back: "raam" },
-    { front: "car", back: "auto" },
-    { front: "tree", back: "boom" },
-    { front: "book", back: "boek" },
-    { front: "water", back: "water" }
+    { front: "apple", frontLang: "EN", back: "appel", backLang: "NL" },
+    { front: "house", frontLang: "EN", back: "huis", backLang: "NL" },
+    { front: "school", frontLang: "EN", back: "school", backLang: "NL" },
+    { front: "computer", frontLang: "EN", back: "computer", backLang: "NL" },
+    { front: "window", frontLang: "EN", back: "raam", backLang: "NL" },
+    { front: "car", frontLang: "EN", back: "auto", backLang: "NL" },
+    { front: "tree", frontLang: "EN", back: "boom", backLang: "NL" },
+    { front: "book", frontLang: "EN", back: "boek", backLang: "NL" },
+    { front: "water", frontLang: "EN", back: "water", backLang: "NL" }
   ];
 
   let currentWord = null;
   let totalAsked = 0;
   let totalCorrect = 0;
+  let hasAnswered = false; // voorkomt meerdere 'checks' op hetzelfde woord
 
   function pickRandomWord() {
     const index = Math.floor(Math.random() * words.length);
@@ -97,29 +108,35 @@
 
   function showStats() {
     const statsDiv = document.getElementById("stats");
-    statsDiv.textContent = `Totaal gevraagd: ${totalAsked} | Goed: ${totalCorrect}`;
+    statsDiv.textContent = `Aantal beantwoorde woorden: ${totalAsked} | Goed: ${totalCorrect}`;
   }
 
   function nextQuestion() {
     currentWord = pickRandomWord();
+    hasAnswered = false;
     document.getElementById("questionWord").textContent = currentWord.front;
     document.getElementById("answerInput").value = "";
     document.getElementById("answerInput").focus();
     document.getElementById("feedback").textContent = "";
-    totalAsked++;
-    showStats();
   }
 
   function checkAnswer() {
+    // voorkom dat meerdere keren op "Check" drukken nog meer punten geeft
+    if (hasAnswered) return;
+    hasAnswered = true;
+
     const userAnswer = document.getElementById("answerInput").value.trim().toLowerCase();
     const correct = currentWord.back.toLowerCase();
-
     const feedbackDiv = document.getElementById("feedback");
+
     if (!userAnswer) {
       feedbackDiv.textContent = "Typ eerst een antwoord.";
       feedbackDiv.style.color = "orange";
+      hasAnswered = false; // nog geen echte poging
       return;
     }
+
+    totalAsked++;
 
     if (userAnswer === correct) {
       feedbackDiv.textContent = "Goed!";
@@ -129,11 +146,16 @@
       feedbackDiv.textContent = `Fout. Goed antwoord: "${correct}"`;
       feedbackDiv.style.color = "red";
     }
+
     showStats();
+
+    // na korte pauze automatisch door naar het volgende woord
+    setTimeout(nextQuestion, 1000);
   }
 
   // Start met eerste vraag
   nextQuestion();
+  showStats();
 </script>
 
 </body>
