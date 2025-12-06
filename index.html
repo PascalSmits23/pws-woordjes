@@ -137,8 +137,8 @@
 
 <h1>Woordjes leren</h1>
 <div class="subtitle">
-  Links: <strong>Standaard versie</strong> (random). Rechts: <strong>AI ondersteunde versie</strong> (adaptief).<br>
-  Beide oefenen: <strong>NL → EN</strong>.
+  Links: <strong>Standaard versie</strong>. Rechts: <strong>AI ondersteunde versie</strong> (adaptief).<br>
+  Beide oefenen Engels en Nederlands.
 </div>
 
 <div class="columns">
@@ -169,14 +169,14 @@
       <h2>AI ondersteunde versie</h2>
 
       <div class="field">
-        <span id="ai-questionTypeLabel"><strong>Vertaal dit woord (NL → EN):</strong></span>
+        <span id="ai-questionTypeLabel"><strong>Vertaal dit woord:</strong></span>
         <div id="ai-questionWord"></div>
         <div id="ai-wordInfo"></div>
       </div>
 
       <!-- Open vraag -->
       <div class="field" id="ai-openArea">
-        <input type="text" id="ai-answerInput" placeholder="Typ hier de Engelse vertaling">
+        <input type="text" id="ai-answerInput" placeholder="Typ hier je antwoord">
       </div>
 
       <!-- Meerkeuzevraag -->
@@ -247,8 +247,8 @@
     { en: "feature",     nl: "kenmerk" }
   ];
 
-  // ============= STANDAARD VERSIE =============
-  const stdWords = baseWords; // alleen EN/NL nodig
+  // ============= STANDAARD VERSIE (NL → EN) =============
+  const stdWords = baseWords;
   let stdCurrentWord = null;
   let stdTotalAsked = 0;
   let stdTotalCorrect = 0;
@@ -292,7 +292,8 @@
 
     stdTotalAsked++;
 
-    if (userAnswer === correct) {
+    const isCorrect = (userAnswer === correct);
+    if (isCorrect) {
       feedbackDiv.textContent = "Goed!";
       feedbackDiv.style.color = "green";
       stdTotalCorrect++;
@@ -302,7 +303,8 @@
     }
 
     stdShowStats();
-    setTimeout(stdNextQuestion, 900); // automatisch volgende
+    const delay = isCorrect ? 1000 : 2000; // 1s goed, 2s fout
+    setTimeout(stdNextQuestion, delay);
   }
 
   // Enter toets in standaard invoerveld
@@ -325,7 +327,8 @@
   let aiTotalAsked = 0;
   let aiTotalCorrect = 0;
   let aiHasAnswered = false;
-  let aiCurrentType = "open"; // "open" of "mc"
+  let aiCurrentType = "open";     // "open" of "mc"
+  let aiDirection = "nl-en";      // "nl-en" of "en-nl"
   let aiHintShown = false;
 
   function difficultyBadge(score) {
@@ -358,23 +361,41 @@
       difficultyBadge(w.score);
   }
 
+  function getCurrentCorrectAnswer() {
+    return aiDirection === "nl-en"
+      ? aiCurrentWord.en
+      : aiCurrentWord.nl;
+  }
+
   function aiBuildMcOptions() {
     const optionsDiv = document.getElementById("ai-mcOptions");
     optionsDiv.innerHTML = "";
-    const correctEn = aiCurrentWord.en;
 
     const others = aiWords.filter(w => w !== aiCurrentWord);
-    // simpele shuffle
     others.sort(() => Math.random() - 0.5);
     const distractors = others.slice(0, 2);
 
-    let optionWords = [correctEn, distractors[0].en, distractors[1].en];
+    let optionWords;
+    if (aiDirection === "nl-en") {
+      optionWords = [
+        aiCurrentWord.en,
+        distractors[0].en,
+        distractors[1].en
+      ];
+    } else {
+      optionWords = [
+        aiCurrentWord.nl,
+        distractors[0].nl,
+        distractors[1].nl
+      ];
+    }
+
     optionWords.sort(() => Math.random() - 0.5);
 
-    optionWords.forEach(wordEn => {
+    optionWords.forEach(wordStr => {
       const btn = document.createElement("button");
-      btn.textContent = wordEn;
-      btn.onclick = () => aiHandleMcAnswer(wordEn, btn);
+      btn.textContent = wordStr;
+      btn.onclick = () => aiHandleMcAnswer(wordStr, btn);
       optionsDiv.appendChild(btn);
     });
   }
@@ -385,7 +406,16 @@
     aiHasAnswered = false;
     aiHintShown = false;
 
-    document.getElementById("ai-questionWord").textContent = aiCurrentWord.nl; // NL → EN
+    // Kies trainingsrichting: helft NL → EN, helft EN → NL
+    aiDirection = Math.random() < 0.5 ? "nl-en" : "en-nl";
+
+    const questionWordDiv = document.getElementById("ai-questionWord");
+    if (aiDirection === "nl-en") {
+      questionWordDiv.textContent = aiCurrentWord.nl;
+    } else {
+      questionWordDiv.textContent = aiCurrentWord.en;
+    }
+
     document.getElementById("ai-feedback").textContent = "";
     document.getElementById("ai-hint").textContent = "";
 
@@ -399,16 +429,19 @@
     const typeLabel = document.getElementById("ai-questionTypeLabel");
     const input = document.getElementById("ai-answerInput");
 
+    const dirLabel = aiDirection === "nl-en" ? "NL → EN" : "EN → NL";
+
     if (aiCurrentType === "open") {
-      typeLabel.innerHTML = "<strong>Open vraag (NL → EN):</strong>";
+      typeLabel.innerHTML = `<strong>Open vraag (${dirLabel}):</strong>`;
       openArea.style.display = "block";
       mcOptions.style.display = "none";
       checkButton.style.display = "inline-block";
       hintButton.style.display = "inline-block";
       input.value = "";
+      input.placeholder = "Typ hier je antwoord";
       input.focus();
     } else {
-      typeLabel.innerHTML = "<strong>Meerkeuzevraag (NL → EN):</strong>";
+      typeLabel.innerHTML = `<strong>Meerkeuzevraag (${dirLabel}):</strong>`;
       openArea.style.display = "none";
       mcOptions.style.display = "block";
       checkButton.style.display = "none";
@@ -427,7 +460,7 @@
 
     const input = document.getElementById("ai-answerInput");
     const userAnswer = input.value.trim().toLowerCase();
-    const correct = aiCurrentWord.en.toLowerCase();
+    const correct = getCurrentCorrectAnswer().toLowerCase();
     const feedbackDiv = document.getElementById("ai-feedback");
 
     if (!userAnswer) {
@@ -439,37 +472,40 @@
 
     aiTotalAsked++;
 
-    if (userAnswer === correct) {
+    const isCorrect = (userAnswer === correct);
+    if (isCorrect) {
       feedbackDiv.textContent = "Goed!";
       feedbackDiv.style.color = "green";
       aiCurrentWord.score = Math.min(aiCurrentWord.score + 1, 5);
       aiCurrentWord.correct++;
       aiTotalCorrect++;
     } else {
-      feedbackDiv.textContent = `Fout. Goed antwoord: "${aiCurrentWord.en}".`;
+      feedbackDiv.textContent = `Fout. Goed antwoord: "${getCurrentCorrectAnswer()}".`;
       feedbackDiv.style.color = "red";
       aiCurrentWord.score = Math.max(aiCurrentWord.score - 1, 0);
     }
 
     aiUpdateWordInfo();
     aiShowStats();
-    setTimeout(aiNextQuestion, 900);
+    const delay = isCorrect ? 1000 : 2000; // 1s goed, 2s fout
+    setTimeout(aiNextQuestion, delay);
   }
 
-  function aiHandleMcAnswer(selectedEn, btn) {
+  function aiHandleMcAnswer(selectedStr, btn) {
     if (aiCurrentType !== "mc") return;
     if (aiHasAnswered) return;
     aiHasAnswered = true;
 
-    const correctEn = aiCurrentWord.en;
+    const correctStr = getCurrentCorrectAnswer();
     const feedbackDiv = document.getElementById("ai-feedback");
     aiTotalAsked++;
 
-    // Alle knoppen ophalen om kleuren aan te passen
     const optionsDiv = document.getElementById("ai-mcOptions");
     const buttons = Array.from(optionsDiv.getElementsByTagName("button"));
 
-    if (selectedEn === correctEn) {
+    const isCorrect = (selectedStr === correctStr);
+
+    if (isCorrect) {
       feedbackDiv.textContent = "Goed!";
       feedbackDiv.style.color = "green";
       aiCurrentWord.score = Math.min(aiCurrentWord.score + 1, 5);
@@ -477,32 +513,30 @@
       aiTotalCorrect++;
       btn.style.backgroundColor = "#43a047";
     } else {
-      feedbackDiv.textContent = `Fout. Goed antwoord: "${correctEn}".`;
+      feedbackDiv.textContent = `Fout. Goed antwoord: "${correctStr}".`;
       feedbackDiv.style.color = "red";
       aiCurrentWord.score = Math.max(aiCurrentWord.score - 1, 0);
       btn.style.backgroundColor = "#e53935";
-      // Highlight goede antwoord
       buttons.forEach(b => {
-        if (b.textContent === correctEn) {
+        if (b.textContent === correctStr) {
           b.style.backgroundColor = "#43a047";
         }
       });
     }
 
-    // Alle knoppen daarna "uitschakelen"
     buttons.forEach(b => b.disabled = true);
 
     aiUpdateWordInfo();
     aiShowStats();
-    setTimeout(aiNextQuestion, 1200);
+    const delay = isCorrect ? 1000 : 2000;
+    setTimeout(aiNextQuestion, delay);
   }
 
   function aiShowHint() {
     if (aiCurrentType !== "open") return; // hint alleen bij open vragen
     const hintDiv = document.getElementById("ai-hint");
-    const answer = aiCurrentWord.en;
+    const answer = getCurrentCorrectAnswer();
 
-    // Adaptief: moeilijke woorden krijgen iets meer letters als hint
     let lettersShown = 1;
     if (aiCurrentWord.score <= 1) {
       lettersShown = Math.min(2, answer.length);
