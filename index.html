@@ -50,10 +50,28 @@
       transform: none;
       box-shadow: none;
     }
+    .stop-button {
+      background: #f44336;
+    }
+    .stop-button:hover {
+      background: #d32f2f;
+    }
     #timerDisplay {
       display: inline-block;
       margin-left: 20px;
       font-weight: bold;
+    }
+    
+    /* Keuze sectie voor versie na start */
+    .version-choice {
+      text-align: center;
+      margin-bottom: 25px;
+      display: none;
+    }
+    .version-choice button {
+      padding: 12px 24px;
+      font-size: 1.1em;
+      margin: 0 15px;
     }
 
     .columns {
@@ -165,19 +183,24 @@
 <body>
 
 <h1>Woordjes leren</h1>
-<div class="subtitle">
-  Links: <strong>Standaard versie</strong>. Rechts: <strong>AI ondersteunde versie</strong>.<br>
-  Optioneel: doe een <strong>1‑minuut challenge</strong> met één van de twee.
-</div>
 
 <div class="timer-bar">
-  <button class="timer-button" id="startStdTimer" onclick="startTimer('std')">
-    1 min – Standaard
+  <button class="timer-button" id="startChallenge" onclick="showVersionChoice()">
+    Start Challenge
   </button>
-  <button class="timer-button" id="startAiTimer" onclick="startTimer('ai')">
-    1 min – AI
+  <button class="timer-button stop-button" id="stopTimer" onclick="stopTimer()" style="display:none;">
+    Stop Challenge
   </button>
   <span id="timerDisplay">Timer: uit</span>
+</div>
+
+<div class="version-choice" id="versionChoice">
+  <button class="timer-button" id="selectStd" onclick="startTimer('std')">
+    Standaard versie
+  </button>
+  <button class="timer-button" id="selectAi" onclick="startTimer('ai')">
+    AI ondersteunde versie
+  </button>
 </div>
 
 <div class="columns">
@@ -231,8 +254,63 @@
 </div>
 
 <script>
-  // --- Gezamenlijke woordenlijst (EN <-> NL) ---
-  const baseWords = [
+  // --- Woordenlijsten ---
+  // Woordenlijst voor Standaard versie
+  const stdWords = [
+    { en: "force", nl: "dwingen" },
+    { en: "ignore", nl: "negeren" },
+    { en: "imagine", nl: "voorstellen (inbeelden)" },
+    { en: "include", nl: "omvatten" },
+    { en: "increase", nl: "verhogen" },
+    { en: "influence", nl: "beïnvloeden" },
+    { en: "inform", nl: "informeren" },
+    { en: "injure", nl: "verwonden" },
+    { en: "intend", nl: "van plan zijn" },
+    { en: "interrupt", nl: "onderbreken" },
+    { en: "maintain", nl: "behouden" },
+    { en: "measure", nl: "meten" },
+    { en: "mention", nl: "vermelden" },
+    { en: "mind", nl: "bezwaar hebben" },
+    { en: "negative", nl: "negatief" },
+    { en: "observe", nl: "observeren" },
+    { en: "occur", nl: "plaatsvinden" },
+    { en: "offer", nl: "aanbieden" },
+    { en: "operate", nl: "bedienen (laten werken)" },
+    { en: "oppose", nl: "zich verzetten tegen" },
+    { en: "permit", nl: "toestaan" },
+    { en: "possess", nl: "bezitten" },
+    { en: "predict", nl: "voorspellen" },
+    { en: "prefer", nl: "verkiezen" },
+    { en: "prepare", nl: "voorbereiden" },
+    { en: "prevent", nl: "voorkomen" },
+    { en: "previous", nl: "eerder" },
+    { en: "produce", nl: "produceren" },
+    { en: "propose", nl: "voorstellen" },
+    { en: "protect", nl: "beschermen" },
+    { en: "provide", nl: "leveren / voorzien van" },
+    { en: "publish", nl: "publiceren" },
+    { en: "realize", nl: "beseffen" },
+    { en: "recent", nl: "recent" },
+    { en: "reduce", nl: "verminderen" },
+    { en: "refuse", nl: "weigeren" },
+    { en: "relate", nl: "betrekking hebben op" },
+    { en: "remove", nl: "verwijderen" },
+    { en: "require", nl: "vereisen" },
+    { en: "respond", nl: "reageren" },
+    { en: "reveal", nl: "onthullen" },
+    { en: "satisfy", nl: "tevredenstellen" },
+    { en: "separate", nl: "scheiden" },
+    { en: "significant", nl: "aanzienlijk / belangrijk" },
+    { en: "similar", nl: "vergelijkbaar" },
+    { en: "struggle", nl: "worstelen" },
+    { en: "suggest", nl: "suggereren / voorstellen" },
+    { en: "survive", nl: "overleven" },
+    { en: "threaten", nl: "bedreigen" },
+    { en: "vary", nl: "variëren" }
+  ];
+  
+  // Woordenlijst voor AI versie
+  const aiBaseWords = [
     { en: "admit",       nl: "toegeven" },
     { en: "advise",      nl: "adviseren" },
     { en: "allow",       nl: "toestaan" },
@@ -305,11 +383,21 @@
     }
   }
 
+  function showVersionChoice() {
+    document.getElementById("versionChoice").style.display = "block";
+    document.getElementById("startChallenge").style.display = "none";
+  }
+
   function startTimer(mode) {
     if (timerRunning) return; // al bezig
     timerMode = mode;
     timerRunning = true;
     timerRemaining = 60;
+
+    // Verberg de keuze sectie
+    document.getElementById("versionChoice").style.display = "none";
+    // Toon de stop knop
+    document.getElementById("stopTimer").style.display = "inline-block";
 
     // Reset run-statistieken voor gekozen mode
     if (mode === "std") {
@@ -333,10 +421,6 @@
       aiCol.classList.remove("disabled-column");
     }
 
-    // Timerknoppen uitschakelen
-    document.getElementById("startStdTimer").disabled = true;
-    document.getElementById("startAiTimer").disabled = true;
-
     updateTimerDisplay();
     timerIntervalId = setInterval(() => {
       timerRemaining--;
@@ -358,9 +442,10 @@
     document.getElementById("std-column").classList.remove("disabled-column");
     document.getElementById("ai-column").classList.remove("disabled-column");
 
-    // Timerknoppen weer aan
-    document.getElementById("startStdTimer").disabled = false;
-    document.getElementById("startAiTimer").disabled = false;
+    // Reset knoppen
+    document.getElementById("startChallenge").style.display = "inline-block";
+    document.getElementById("stopTimer").style.display = "none";
+    document.getElementById("versionChoice").style.display = "none";
 
     // Resultaat tonen voor de mode die liep
     if (timerMode === "std") {
@@ -377,7 +462,6 @@
   }
 
   // ============= STANDAARD VERSIE =============
-  const stdWords = baseWords;
   let stdCurrentWord = null;
   let stdDirection = "nl-en"; // per vraag random
   let stdHasAnswered = false;
@@ -454,20 +538,13 @@
     setTimeout(stdNextQuestion, delay);
   }
 
-  // Enter-toets in standaard invoerveld
-  document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("std-answerInput").addEventListener("keydown", e => {
-      if (e.key === "Enter") stdCheckAnswer();
-    });
-  });
-
   // ============= AI ONDERSTEUNDE VERSIE =============
   // Per woord houden we bij:
   // - firstAsked: is het al eens als open vraag geweest?
   // - needsMc: moet er nog een meerkeuzevraag komen na een fout?
   // - mcDueQuestion: na welk vraagnummer mag de MC-vraag opduiken?
   // - statsAsked / statsCorrect: niet getoond, maar beschikbaar
-  const aiWords = baseWords.map(w => ({
+  const aiWords = aiBaseWords.map(w => ({
     en: w.en,
     nl: w.nl,
     firstAsked: false,
@@ -684,8 +761,12 @@
     aiHintShown = true;
   }
 
-  // Enter-toets in AI-invoerveld
+  // Enter-toets in invoervelden
   document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("std-answerInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") stdCheckAnswer();
+    });
+    
     document.getElementById("ai-answerInput").addEventListener("keydown", e => {
       if (e.key === "Enter") aiCheckAnswer();
     });
@@ -696,5 +777,5 @@
   });
 </script>
 
-</body>
-</html>
+
+</body></html>
