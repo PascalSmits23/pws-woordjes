@@ -259,7 +259,7 @@
   const stdWords = [
     { en: "force", nl: "dwingen" },
     { en: "ignore", nl: "negeren" },
-    { en: "imagine", nl: "voorstellen (inbeelden)" },
+    { en: "imagine", nl: "voorstellen" },
     { en: "include", nl: "omvatten" },
     { en: "increase", nl: "verhogen" },
     { en: "influence", nl: "beïnvloeden" },
@@ -270,12 +270,12 @@
     { en: "maintain", nl: "behouden" },
     { en: "measure", nl: "meten" },
     { en: "mention", nl: "vermelden" },
-    { en: "mind", nl: "bezwaar hebben" },
+    { en: "mind", nl: "verstand" },
     { en: "negative", nl: "negatief" },
     { en: "observe", nl: "observeren" },
     { en: "occur", nl: "plaatsvinden" },
     { en: "offer", nl: "aanbieden" },
-    { en: "operate", nl: "bedienen (laten werken)" },
+    { en: "operate", nl: "bedienen" },
     { en: "oppose", nl: "zich verzetten tegen" },
     { en: "permit", nl: "toestaan" },
     { en: "possess", nl: "bezitten" },
@@ -287,7 +287,7 @@
     { en: "produce", nl: "produceren" },
     { en: "propose", nl: "voorstellen" },
     { en: "protect", nl: "beschermen" },
-    { en: "provide", nl: "leveren / voorzien van" },
+    { en: "provide", nl: "voorzien" },
     { en: "publish", nl: "publiceren" },
     { en: "realize", nl: "beseffen" },
     { en: "recent", nl: "recent" },
@@ -300,10 +300,10 @@
     { en: "reveal", nl: "onthullen" },
     { en: "satisfy", nl: "tevredenstellen" },
     { en: "separate", nl: "scheiden" },
-    { en: "significant", nl: "aanzienlijk / belangrijk" },
+    { en: "significant", nl: "aanzienlijk" },
     { en: "similar", nl: "vergelijkbaar" },
     { en: "struggle", nl: "worstelen" },
-    { en: "suggest", nl: "suggereren / voorstellen" },
+    { en: "suggest", nl: "voorstellen" },
     { en: "survive", nl: "overleven" },
     { en: "threaten", nl: "bedreigen" },
     { en: "vary", nl: "variëren" }
@@ -320,7 +320,7 @@
     { en: "approach",    nl: "benaderen" },
     { en: "argue",       nl: "redeneren" },
     { en: "arrange",     nl: "regelen" },
-    { en: "assume",      nl: "aannemen (veronderstellen)" },
+    { en: "assume",      nl: "aannemen" },
     { en: "attempt",     nl: "poging doen" },
     { en: "avoid",       nl: "vermijden" },
     { en: "aware",       nl: "bewust" },
@@ -691,7 +691,7 @@
       if (isCorrect) aiRunCorrect++;
     }
 
-    const delay = isCorrect ? 1000 : 2000;
+    const delay = isCorrect ? 800 : 1600;
     setTimeout(aiNextQuestion, delay);
   }
 
